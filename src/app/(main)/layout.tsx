@@ -25,13 +25,13 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { userInfo, clearUserInfo } = useUserStore((state) => state);
+  const { userInfo, clearUserInfo, hasHydrated } = useUserStore((state) => state);
   const router = useRouter();
  useEffect(() => {
-    if (!userInfo) {
-      router.push("/login"); // userInfo가 없을 경우 로그인 페이지로 리다이렉트
-    }
-  }, [userInfo, router]);
+   if (!userInfo && hasHydrated) {
+     router.push("/login"); // userInfo가 없을 경우 로그인 페이지로 리다이렉트
+   }
+ }, [userInfo, router, hasHydrated]);
   const handleLogout = () => {
     clearUserInfo();
     router.push("/login"); // 로그아웃 후 로그인 페이지로 리다이렉트
