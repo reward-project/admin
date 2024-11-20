@@ -114,7 +114,12 @@ const hasHydrated = useUserStore((state) => state.hasHydrated);
 
       <div className="mt-8">
         {/* iframe 추가 */}
-        <iframe src="https://monitor.master-of-prediction.shop/d-solo/ce4hto5h2cykgd/activeuser?from=1732066584644&to=1732088184644&timezone=browser&orgId=1&panelId=1&__feature.dashboardSceneSolo" width="450" height="200" frameborder="0"></iframe>
+        <iframe
+          src="https://monitor.master-of-prediction.shop/d-solo/ce4hto5h2cykgd/activeuser?from=1732066584644&to=1732088184644&timezone=browser&orgId=1&panelId=1&__feature.dashboardSceneSolo"
+          width="450"
+          height="200"
+          frameBorder="0"
+        />
       </div>
     </div>
   );
