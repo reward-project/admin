@@ -1,5 +1,5 @@
 
-import apiClient from "@handler/fetch/fetch";
+import apiClient from "@/handler/fetch/fetch";
 export   async function urlToFile(url: string): Promise<File> {
     // URL에서 파일 데이터를 가져옴
     const response = await fetch(url);
