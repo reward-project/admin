@@ -2,7 +2,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Bell,
   Layout,
@@ -27,7 +27,11 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { userInfo, clearUserInfo } = useUserStore((state) => state);
   const router = useRouter();
-
+ useEffect(() => {
+    if (!userInfo) {
+      router.push("/login"); // userInfo가 없을 경우 로그인 페이지로 리다이렉트
+    }
+  }, [userInfo, router]);
   const handleLogout = () => {
     clearUserInfo();
     router.push("/login"); // 로그아웃 후 로그인 페이지로 리다이렉트
