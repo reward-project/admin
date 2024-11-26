@@ -25,40 +25,18 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { setHasHydrated, hasHydrated, userInfo, setUserInfo } = useUserStore(
-    (state) => ({
-      hasHydrated: state.hasHydrated,
-      setHasHydrated: state.setHasHydrated,
-      userInfo: state.userInfo,
-      setUserInfo: state.setUserInfo,
-    })
-  );
+  const { userInfo, clearUserInfo, hasHydrated } = useUserStore((state) => state);
   const router = useRouter();
-
-  useEffect(() => {
-    const rehydrate = async () => {
-      const storedState = localStorage.getItem("user-storage");
-      if (storedState) {
-        const parsedState = JSON.parse(storedState);
-        setUserInfo(parsedState.userInfo || null);
-      }
-      setHasHydrated(true); // Hydration 완료 상태 설정
-    };
-
-    if (!hasHydrated) {
-      rehydrate();
-    }
-  }, [setHasHydrated, setUserInfo, hasHydrated]);
-
-  useEffect(() => {
-    if (hasHydrated && !userInfo) {
-      router.push("/login");
-    }
-  }, [hasHydrated, userInfo, router]);
-
-  if (!hasHydrated) {
-    return <div>Loading...</div>;
-  }
+ useEffect(() => {
+   if (hasHydrated && !userInfo) {
+     // hasHydrated가 true이고 userInfo가 없는 경우에만 동작
+     router.push("/login");
+   }
+ }, [userInfo, router, hasHydrated]);
+  const handleLogout = () => {
+    clearUserInfo();
+    router.push("/login"); // 로그아웃 후 로그인 페이지로 리다이렉트
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
