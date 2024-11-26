@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
         {
           protocol: "http",
           hostname: "master-of-prediction.shop",
+      },
+           {
+          protocol: "https",
+          hostname: "file.master-of-prediction.shop",
         },
       ],
   },
