@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Master of Prediction",
-  description: "Master of Prediction",
+  title: "예측의 달인",
+  description: "예측의 달인",
 };
 
 export default function RootLayout({
