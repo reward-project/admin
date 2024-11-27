@@ -54,72 +54,71 @@ const hasHydrated = useUserStore((state) => state.hasHydrated);
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <h3 className="text-gray-700 text-3xl font-medium">Dashboard</h3>
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <h3 className="text-gray-700 text-xl sm:text-3xl font-medium">대시보드</h3>
 
       <div className="mt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {/* 총 사용자 수 */}
-          <Card>
+          <Card className="w-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium">전체 사용자</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {userCounts.authenticatedUserCount +
                   userCounts.anonymousUserCount}
               </div>
               <p className="text-xs text-muted-foreground">
-                {/* 추가 정보가 필요하다면 여기에 표시 */}
+                전체 등록된 사용자 수
               </p>
             </CardContent>
           </Card>
+
           {/* 인증된 사용자 수 */}
-          <Card>
+          <Card className="w-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Authenticated Users
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">인증 사용자</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {userCounts.authenticatedUserCount}
               </div>
               <p className="text-xs text-muted-foreground">
-                {/* 추가 정보가 필요하다면 여기에 표시 */}
+                로그인한 사용자 수
               </p>
             </CardContent>
           </Card>
+
           {/* 익명 사용자 수 */}
-          <Card>
+          <Card className="w-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Anonymous Users
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">비회원 사용자</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {userCounts.anonymousUserCount}
               </div>
               <p className="text-xs text-muted-foreground">
-                {/* 추가 정보가 필요하다면 여기에 표시 */}
+                비로그인 사용자 수
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="mt-8">
-        {/* iframe 추가 */}
-        <iframe
-          src="https://monitor.master-of-prediction.shop/d-solo/ce4hto5h2cykgd/activeuser?from=1732066584644&to=1732088184644&timezone=browser&orgId=1&panelId=1&__feature.dashboardSceneSolo"
-          width="450"
-          height="200"
-          frameBorder="0"
-        />
+      <div className="mt-8 overflow-x-auto">
+        {/* iframe을 반응형으로 수정 */}
+        <div className="w-full max-w-[450px] mx-auto">
+          <iframe
+            src="https://monitor.master-of-prediction.shop/d-solo/ce4hto5h2cykgd/activeuser?from=1732066584644&to=1732088184644&timezone=browser&orgId=1&panelId=1&__feature.dashboardSceneSolo"
+            className="w-full h-[200px]"
+            frameBorder="0"
+          />
+        </div>
       </div>
     </div>
   );
