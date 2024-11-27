@@ -43,7 +43,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md">
         <div className="p-4">
-          <h1 className="text-2xl font-bold text-gray-800">Admin Panel</h1>
+          <h1 className="text-2xl font-bold text-gray-800">관리자 패널</h1>
         </div>
         <nav className="mt-4">
           <Link
@@ -51,35 +51,35 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
           >
             <Layout className="mr-2" size={20} />
-            Dashboard
+            대시보드
           </Link>
           <Link
             href="/users"
             className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
           >
             <Users className="mr-2" size={20} />
-            Users
+            사용자 관리
           </Link>
           <Link
             href="/feeds"
             className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
           >
             <List className="mr-2" size={20} />
-            Feeds
+            피드 관리
           </Link>
           <Link
             href="/settings"
             className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
           >
             <Settings className="mr-2" size={20} />
-            Settings
+            설정
           </Link>
           <Link
             href="/category-channels"
             className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
           >
             <Layers className="mr-2" size={20} />
-            Category Channels
+            카테고리 채널
           </Link>
         </nav>
       </aside>
@@ -89,11 +89,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Header */}
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h2 className="font-semibold text-xl text-gray-800">Dashboard</h2>
+            <h2 className="font-semibold text-xl text-gray-800">대시보드</h2>
             <div className="flex items-center">
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
+                <span className="sr-only">알림</span>
               </Button>
               <div className="ml-3 relative">
                 <div className="flex items-center">
