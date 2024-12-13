@@ -1,51 +1,40 @@
 "use client";
-import toast from "react-hot-toast";
 import { create } from "zustand";
 import { persist, devtools } from "zustand/middleware";
+import apiClient from '@/handler/fetch/axios';
 
-// UserInfo 인터페이스 정의
 export interface UserInfo {
   id?: string;
   email?: string;
   displayName?: string;
-  userName?: string;
-  age?: number;
-  gender?: string;
   authority?: string;
-  location?: string;
   token?: string;
-  birthday?: string;
-  avatarUrl?: string;
-  tier?: string;
+  refreshToken?: string;
 }
 
-// UserStore 인터페이스 정의
 interface UserStore {
   userInfo: UserInfo | null;
   setUserInfo: (info: UserInfo) => void;
   clearUserInfo: () => void;
-  hasHydrated: boolean; // Hydration 완료 여부 상태
-  setHasHydrated: (state: boolean) => void; // Hydration 상태 업데이트 함수
+  hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+  refreshToken: () => Promise<boolean>;
 }
 
-// Zustand 스토어 생성
 const useUserStore = create<UserStore>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         userInfo: null,
-        hasHydrated: false, // 초기값 false
+        hasHydrated: false,
         setUserInfo: (info) => {
-          if (!info.token) {
-            toast.error(
-              "User information cannot be set without a valid token."
-            );
-            return; // Exit early if there's no token
+          if (!info.token || !info.refreshToken) {
+            console.error("Token and refresh token are required");
+            return;
           }
           set({ userInfo: info });
         },
         clearUserInfo: () => {
-          console.log("clearUserInfo called");
           set({ userInfo: null });
           localStorage.removeItem("user-storage");
 
@@ -56,17 +45,41 @@ const useUserStore = create<UserStore>()(
         setHasHydrated: (state: boolean) => {
           set({ hasHydrated: state });
         },
+        refreshToken: async () => {
+          const currentUser = get().userInfo;
+          if (!currentUser?.refreshToken) return false;
+
+          try {
+            const response = await apiClient.post('/members/refresh', {
+              refreshToken: currentUser.refreshToken
+            });
+
+            if (response.data.success && response.data.data) {
+              set({
+                userInfo: {
+                  ...currentUser,
+                  token: response.data.data.accessToken,
+                  refreshToken: response.data.data.refreshToken,
+                }
+              });
+              return true;
+            }
+            return false;
+          } catch (error) {
+            console.error('Token refresh failed:', error);
+            get().clearUserInfo();
+            return false;
+          }
+        }
       }),
       {
         name: "user-storage",
         partialize: (state) => ({ userInfo: state.userInfo }),
         onRehydrateStorage: () => (state) => {
-          console.log("rehydrate success");
-          state?.setHasHydrated(true); // Hydration이 완료되면 상태를 true로 설정
+          state?.setHasHydrated(true);
         },
       }
-    ),
-    { name: "UserStore" }
+    )
   )
 );
 

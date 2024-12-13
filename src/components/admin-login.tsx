@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,40 +18,62 @@ import {
 import { useRouter } from "next/navigation";
 import useUserStore from "@/store/useUserStore";
 import apiClient from "@/handler/fetch/axios";
+
 export function AdminLoginComponent() {
-  const [email, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Zustand 상태 관리
-  const setUserInfo = useUserStore((state) => state.setUserInfo);
+  const { setUserInfo, userInfo, hasHydrated } = useUserStore();
+
+  // 이미 로그인된 상태라면 대시보드로 리다이렉트
+  useEffect(() => {
+    if (hasHydrated && userInfo?.token) {
+      router.replace('/dashboard');
+    }
+  }, [hasHydrated, userInfo, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
-      // 로그인 요청
-      const response = await apiClient.post("/auth/admin/login", {
+      const response = await apiClient.post("/members/login", {
         email,
         password,
+        role: "admin"
       });
 
-      // 액세스 토큰 가져오기
-      const accessToken = response.data.token;
-      console.log("Login successful:", accessToken);
+      if (response.data.success && response.data.data) {
+        const { accessToken, refreshToken } = response.data.data;
+        
+        // Zustand 스토어에 사용자 정보 저장
+        setUserInfo({
+          token: accessToken,
+          refreshToken: refreshToken,
+          email: email,
+          // 필요한 다른 사용자 정보도 저장
+        });
 
-      // Zustand 스토어에 사용자 정보 저장
-      setUserInfo(response.data);
-
-      // 로그인 성공 시 홈으로 리다이렉트
-      router.push("/dashboard");
-    } catch (error) {
-      setError("잘못된 사용자 이름 또는 비밀번호입니다.");
+        router.push("/dashboard");
+      } else {
+        setError(response.data.message || "로그인에 실패했습니다.");
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || "로그인 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // hydration이 완료되지 않았다면 로딩 상태를 보여줌
+  if (!hasHydrated) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -68,19 +90,21 @@ export function AdminLoginComponent() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">사용자 이름</Label>
+                <Label htmlFor="email">이메일</Label>
                 <div className="relative">
                   <User
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                     size={18}
                   />
                   <Input
-                    id="username"
-                    placeholder="사용자 이름을 입력하세요"
+                    id="email"
+                    type="email"
+                    placeholder="이메일을 입력하세요"
                     value={email}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -99,14 +123,13 @@ export function AdminLoginComponent() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                    aria-label={
-                      showPassword ? "비밀번호 숨기기" : "비밀번호 보이기"
-                    }
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -114,8 +137,12 @@ export function AdminLoginComponent() {
               </div>
             </div>
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-            <Button type="submit" className="w-full mt-6">
-              로그인
+            <Button 
+              type="submit" 
+              className="w-full mt-6"
+              disabled={isLoading}
+            >
+              {isLoading ? "로그인 중..." : "로그인"}
             </Button>
           </form>
         </CardContent>
@@ -123,7 +150,7 @@ export function AdminLoginComponent() {
           <p className="text-sm text-center w-full text-gray-600">
             기술적인 문제가 있나요?{" "}
             <a href="#" className="text-blue-600 hover:underline">
-              지원팀에 문의하세요
+              지원���에 문의하세요
             </a>
           </p>
         </CardFooter>

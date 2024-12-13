@@ -10,6 +10,7 @@ import {
   Settings,
   Users,
   Layers,
+  FileText,
   MoreVertical,
   LogOut,
   Menu as MenuIcon,
@@ -110,6 +111,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           >
             <Layers className="mr-2" size={20} />
             카테고리 채널
+          </Link>
+          <Link
+            href="/notices"
+            className="block py-2 px-4 text-gray-700 hover:bg-gray-200 flex items-center"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <FileText className="mr-2" size={20} />
+            공지사항 관리
           </Link>
         </nav>
       </aside>

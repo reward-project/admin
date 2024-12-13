@@ -2,127 +2,149 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, MapPin, Shield, Image } from "lucide-react";
-import apiClient from "@/handler/fetch/axios";
+import { Search } from "lucide-react";
+import apiClient from '@/handler/fetch/axios';
+import { format } from 'date-fns';
+import { toast } from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
-interface UserInfo {
+interface User {
   id: number;
   email: string;
-  displayName: string;
-  userName: string;
-  age: number;
-  gender: string;
-  location: string;
-  authority: string;
-  token: string;
-  birthday: string;
-  avatarUrl: string | null;
-  isWithdrawal: boolean;
+  name: string;
+  nickname: string;
+  roles: string[];
+  createdAt: string;
 }
 
 export function UserListComponent() {
-  const [users, setUsers] = useState<UserInfo[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUsers(currentPage);
-  }, [currentPage]);
-
-  const fetchUsers = async (page: number) => {
+  const fetchUsers = async () => {
     try {
-      const response = await apiClient.get(`/users?page=${page}&size=20`);
-      setUsers(response.data.content);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error("Error fetching users:", error);
+      setIsLoading(true);
+      const response = await apiClient.get('/members', {
+        params: {
+          search,
+          page,
+          size: 10,
+          sort: 'createdAt,desc'
+        }
+      });
+
+      if (response.data.success) {
+        const { content, totalPages } = response.data.data;
+        setUsers(content);
+        setTotalPages(totalPages);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch users:', error);
+      toast({
+        title: "에러 발생",
+        description: error.response?.data?.message || "사용자 목록을 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, [page, search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(0);
+    fetchUsers();
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">사용자 목록</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {users.map((user) => (
-          <Card key={user.id} className="overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">
-                {user.displayName}
-              </CardTitle>
-              <CardDescription>사용자 ID: {user.id}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <User className="mr-2 text-gray-500" size={16} />
-                  <span className="text-sm">유저네임: {user.userName}</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="mr-2 text-gray-500" size={16} />
-                  <span className="text-sm">이메일: {user.email}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="mr-2 text-gray-500" size={16} />
-                  <span className="text-sm">생년월일: {user.birthday}</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="mr-2 text-gray-500" size={16} />
-                  <span className="text-sm">위치: {user.location}</span>
-                </div>
-                <div className="flex items-center">
-                  <Shield className="mr-2 text-gray-500" size={16} />
-                  <span className="text-sm">권한: {user.authority}</span>
-                </div>
-                <div className="flex items-center">
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={`${user.displayName} 아바타`}
-                      className="w-16 h-16 mr-2 rounded-md"
-                    />
-                  ) : (
-                    <Image className="mr-2 text-gray-500" size={16} />
-                  )}
-                  <span className="text-sm">
-                    아바타: {user.avatarUrl ? "있음" : "없음"}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm">
-                    계정 상태: {user.isWithdrawal ? "탈퇴됨" : "활성"}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">사용자 관리</h1>
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <Input
+            placeholder="이메일 또는 이름으로 검색"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <Button type="submit" disabled={isLoading}>
+            <Search className="h-4 w-4 mr-2" />
+            검색
+          </Button>
+        </form>
       </div>
-      {/* Pagination Controls */}
-      <div className="flex justify-center mt-6 space-x-4">
+
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>이메일</TableHead>
+              <TableHead>이름</TableHead>
+              <TableHead>닉네임</TableHead>
+              <TableHead>권한</TableHead>
+              <TableHead>가입일</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.id}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.name}</TableCell>
+                <TableCell>{user.nickname}</TableCell>
+                <TableCell>
+                  {user.roles.map(role => (
+                    <span
+                      key={role}
+                      className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium",
+                        role === "ROLE_ADMIN" && "bg-red-100 text-red-800",
+                        role === "ROLE_USER" && "bg-blue-100 text-blue-800",
+                        role === "ROLE_BUSINESS" && "bg-green-100 text-green-800"
+                      )}
+                    >
+                      {role.replace('ROLE_', '')}
+                    </span>
+                  ))}
+                </TableCell>
+                <TableCell>
+                  {format(new Date(user.createdAt), 'yyyy-MM-dd HH:mm')}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-center gap-2 mt-4">
         <Button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-          disabled={currentPage === 0}
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0 || isLoading}
         >
           이전
         </Button>
-        <span className="text-sm">
-          페이지 {currentPage + 1} / {totalPages}
-        </span>
         <Button
-          onClick={() =>
-            setCurrentPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev))
-          }
-          disabled={currentPage + 1 === totalPages}
+          onClick={() => setPage(p => p + 1)}
+          disabled={page >= totalPages - 1 || isLoading}
         >
           다음
         </Button>

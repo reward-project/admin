@@ -1,69 +1,96 @@
 "use client";
 import axios from 'axios';
-import { toast } from 'react-hot-toast'; // react-hot-toast 가져오기
+import { toast } from 'react-hot-toast';
 import useUserStore from '@/store/useUserStore';
 
-
-// Axios 인스턴스 생성
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,  // API origin으로 설정
-  withCredentials: true,  // 인증 정보가 필요할 경우
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',  // 기본은 JSON
+    'Content-Type': 'application/json',
   },
 });
 
-export default apiClient;
+// 토큰 갱신 중인지 확인하는 플래그
+let isRefreshing = false;
+// 토큰 갱신 대기 중인 요청들을 저장하는 배열
+let refreshSubscribers: ((token: string) => void)[] = [];
 
-// 요청 인터셉터 추가
+// 토큰 갱신 후 대기 중인 요청들을 처리하는 함수
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+};
+
+// 토큰 갱신을 기다리는 함수
+const addRefreshSubscriber = (cb: (token: string) => void) => {
+  refreshSubscribers.push(cb);
+};
+
 apiClient.interceptors.request.use(
   (config) => {
-    const token = useUserStore.getState().userInfo?.token; // Zustand에서 토큰 가져오기
-    console.log(token);
-    console.log(config.baseURL);
-    console.log(config.url);
-    console.log(config.method);
-
+    const token = useUserStore.getState().userInfo?.token;
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
-    console.error("Request Error:", error);
     return Promise.reject(error);
   }
 );
 
-// 응답 인터셉터 추가
-// 응답 인터셉터
 apiClient.interceptors.response.use(
   (response) => {
-    // 200번대 응답일 경우 성공 토스트 표시 (백엔드에서 받은 메시지 사용)
-    if (response.status >= 200 && response.status < 300 && response.data?.message) {
-      toast.success(response.data?.message);
+    if (response.data?.message) {
+      toast.success(response.data.message);
     }
     return response;
   },
-  (error) => {
-    const status = error.response?.status;
-    const customMessage = error.response?.data?.message; // 백엔드에서 커스텀 메시지를 전달받음
+  async (error) => {
+    const originalRequest = error.config;
 
-    // 500번대 오류 처리
-    if (status >= 500 && status < 600) {
-      toast.error(customMessage );
-    } else if (status === 401) {
-      toast.error(customMessage );
-    } else if (status === 403) {
-      // toast.error(customMessage ||messages['권한_없음']);
-    } else {
-      toast.error(customMessage);
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // 토큰 갱신 중이면 새 토큰을 기다림
+        return new Promise(resolve => {
+          addRefreshSubscriber(token => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshed = await useUserStore.getState().refreshToken();
+        if (refreshed) {
+          const newToken = useUserStore.getState().userInfo?.token;
+          if (newToken) {
+            onRefreshed(newToken);
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            return apiClient(originalRequest);
+          }
+        }
+        throw error;
+      } catch (refreshError) {
+        useUserStore.getState().clearUserInfo();
+        toast.error('로그인이 필요합니다.');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
+    toast.error(error.response?.data?.message || '오류가 발생했습니다.');
     return Promise.reject(error);
   }
 );
-// 특정 요청을 보낼 때 headers 설정을 동적으로 변경하는 예시
+
+export default apiClient;
+
 export const sendMultipartForm = async (url: string, formData: FormData, method: 'post' | 'put') => {
   return apiClient({
     method: method,
